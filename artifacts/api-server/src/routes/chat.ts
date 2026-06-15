@@ -60,14 +60,17 @@ Respond with ONLY valid JSON (no markdown, no explanation). Choose ONE action:
    {"action":"show_tasks","response_text":"..."}
    List all tasks with progress in response_text.
 
-5. unknown — anything else (general question, greeting, etc.)
+5. unknown — anything else (general question, greeting, casual chat)
    {"action":"unknown","response_text":"..."}
+   For greetings like "hi", "hello", respond warmly and tell the user what you can help with.
 
 Rules:
 - Always include response_text with a helpful, concise reply (1-3 sentences max).
 - For update_task, match task_name to the most relevant existing task title, even if user uses synonyms (questions=problems=mcqs=exercises).
 - Never include markdown in response_text.
-- Keep response_text natural and encouraging.`;
+- Keep response_text natural and encouraging.
+- Handle typos and abbreviations gracefully — "todat" means "today", "ques" means "questions", etc.
+- IMPORTANT: Return ONLY a raw JSON object. No markdown fences, no extra text, just the JSON.`;
 
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash",
@@ -79,8 +82,24 @@ Rules:
   });
 
   const text = response.text ?? "{}";
-  const cleaned = text.replace(/```json|```/g, "").trim();
-  return JSON.parse(cleaned) as AiAction;
+  // Strip markdown fences if present
+  let cleaned = text.replace(/```json\s*/gi, "").replace(/```/g, "").trim();
+  // Extract first JSON object in case there's extra text around it
+  const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+  if (jsonMatch) cleaned = jsonMatch[0];
+  try {
+    return JSON.parse(cleaned) as AiAction;
+  } catch {
+    // If JSON parse fails, ask Gemini to retry with a stricter prompt
+    const retryResponse = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: [{ role: "user", parts: [{ text: `${prompt}\n\nIMPORTANT: Your previous response was not valid JSON. Return ONLY a raw JSON object, nothing else.` }] }],
+      config: { responseMimeType: "application/json", maxOutputTokens: 512 },
+    });
+    const retryText = (retryResponse.text ?? "{}").replace(/```json\s*/gi, "").replace(/```/g, "").trim();
+    const retryMatch = retryText.match(/\{[\s\S]*\}/);
+    return JSON.parse(retryMatch ? retryMatch[0] : retryText) as AiAction;
+  }
 }
 
 function formatTask(task: typeof tasksTable.$inferSelect) {
