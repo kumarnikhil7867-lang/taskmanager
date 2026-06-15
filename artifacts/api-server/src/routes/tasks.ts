@@ -1,7 +1,6 @@
 import { Router } from "express";
 import { eq, and } from "drizzle-orm";
 import { db, tasksTable, activityLogsTable } from "@workspace/db";
-import { getAuth } from "@clerk/express";
 import {
   CreateTaskBody,
   UpdateTaskBody,
@@ -12,7 +11,6 @@ import {
   UpdateTaskProgressParams,
   ListTasksQueryParams,
 } from "@workspace/api-zod";
-import { requireAuth } from "../middlewares/requireAuth";
 
 const router = Router();
 
@@ -36,8 +34,9 @@ function formatTask(task: typeof tasksTable.$inferSelect) {
 }
 
 // GET /api/tasks
-router.get("/", requireAuth, async (req, res) => {
-  const { userId } = getAuth(req);
+router.get("/",  async (req, res) => {
+  const userId = "owner";
+  
   const query = ListTasksQueryParams.safeParse(req.query);
   if (!query.success) {
     res.status(400).json({ error: "Invalid query params" });
@@ -66,8 +65,9 @@ router.get("/", requireAuth, async (req, res) => {
 });
 
 // POST /api/tasks
-router.post("/", requireAuth, async (req, res) => {
-  const { userId } = getAuth(req);
+router.post("/",  async (req, res) => {
+  const userId = "owner";
+  
   const body = CreateTaskBody.safeParse(req.body);
   if (!body.success) {
     res.status(400).json({ error: "Invalid request body" });
@@ -99,8 +99,9 @@ router.post("/", requireAuth, async (req, res) => {
 });
 
 // GET /api/tasks/:id
-router.get("/:id", requireAuth, async (req, res) => {
-  const { userId } = getAuth(req);
+router.get("/:id",  async (req, res) => {
+  const userId = "owner";
+  
   const id = parseInt(String(req.params.id));
   const params = GetTaskParams.safeParse({ id });
   if (!params.success) {
@@ -122,8 +123,9 @@ router.get("/:id", requireAuth, async (req, res) => {
 });
 
 // PATCH /api/tasks/:id
-router.patch("/:id", requireAuth, async (req, res) => {
-  const { userId } = getAuth(req);
+router.patch("/:id",  async (req, res) => {
+  const userId = "owner";
+  
   const id = parseInt(String(req.params.id));
   const params = UpdateTaskParams.safeParse({ id });
   if (!params.success) {
@@ -163,8 +165,9 @@ router.patch("/:id", requireAuth, async (req, res) => {
 });
 
 // DELETE /api/tasks/:id
-router.delete("/:id", requireAuth, async (req, res) => {
-  const { userId } = getAuth(req);
+router.delete("/:id",  async (req, res) => {
+  const userId = "owner";
+  
   const id = parseInt(String(req.params.id));
   const params = DeleteTaskParams.safeParse({ id });
   if (!params.success) {
@@ -186,8 +189,9 @@ router.delete("/:id", requireAuth, async (req, res) => {
 });
 
 // POST /api/tasks/:id/progress
-router.post("/:id/progress", requireAuth, async (req, res) => {
-  const { userId } = getAuth(req);
+router.post("/:id/progress",  async (req, res) => {
+  const userId = "owner";
+  
   const id = parseInt(String(req.params.id));
   const params = UpdateTaskProgressParams.safeParse({ id });
   if (!params.success) {

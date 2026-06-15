@@ -1,12 +1,10 @@
 import { Router } from "express";
 import { eq, and, desc, gte, lt } from "drizzle-orm";
 import { db, activityLogsTable, tasksTable } from "@workspace/db";
-import { getAuth } from "@clerk/express";
 import {
   GetTaskActivityParams,
   ListActivityLogsQueryParams,
 } from "@workspace/api-zod";
-import { requireAuth } from "../middlewares/requireAuth";
 
 const router = Router();
 
@@ -26,8 +24,9 @@ function formatLog(
 }
 
 // GET /api/tasks/:id/activity
-router.get("/tasks/:id/activity", requireAuth, async (req, res) => {
-  const { userId } = getAuth(req);
+router.get("/tasks/:id/activity",  async (req, res) => {
+  const userId = "owner";
+  
   const id = parseInt(String(req.params.id));
   const params = GetTaskActivityParams.safeParse({ id });
   if (!params.success) {
@@ -61,8 +60,9 @@ router.get("/tasks/:id/activity", requireAuth, async (req, res) => {
 });
 
 // GET /api/activity-logs
-router.get("/activity-logs", requireAuth, async (req, res) => {
-  const { userId } = getAuth(req);
+router.get("/activity-logs",  async (req, res) => {
+  const userId = "owner";
+  
   const query = ListActivityLogsQueryParams.safeParse(req.query);
   if (!query.success) {
     res.status(400).json({ error: "Invalid query params" });

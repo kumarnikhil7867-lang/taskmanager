@@ -1,13 +1,11 @@
 import { Router } from "express";
 import { eq, and, desc } from "drizzle-orm";
 import { db, tasksTable, activityLogsTable, chatMessagesTable } from "@workspace/db";
-import { getAuth } from "@clerk/express";
 import { ai } from "@workspace/integrations-gemini-ai";
 import {
   SendChatMessageBody,
   GetChatHistoryQueryParams,
 } from "@workspace/api-zod";
-import { requireAuth } from "../middlewares/requireAuth";
 import { logger } from "../lib/logger";
 
 const router = Router();
@@ -105,8 +103,9 @@ function formatTask(task: typeof tasksTable.$inferSelect) {
 }
 
 // POST /api/chat/message
-router.post("/message", requireAuth, async (req, res) => {
-  const { userId } = getAuth(req);
+router.post("/message",  async (req, res) => {
+  const userId = "owner";
+  
   const body = SendChatMessageBody.safeParse(req.body);
   if (!body.success) {
     res.status(400).json({ error: "Invalid request body" });
@@ -250,8 +249,9 @@ router.post("/message", requireAuth, async (req, res) => {
 });
 
 // GET /api/chat/history
-router.get("/history", requireAuth, async (req, res) => {
-  const { userId } = getAuth(req);
+router.get("/history",  async (req, res) => {
+  const userId = "owner";
+  
   const query = GetChatHistoryQueryParams.safeParse(req.query);
   if (!query.success) {
     res.status(400).json({ error: "Invalid query params" });
@@ -279,8 +279,9 @@ router.get("/history", requireAuth, async (req, res) => {
 });
 
 // DELETE /api/chat/history
-router.delete("/history", requireAuth, async (req, res) => {
-  const { userId } = getAuth(req);
+router.delete("/history",  async (req, res) => {
+  const userId = "owner";
+  
   await db
     .delete(chatMessagesTable)
     .where(eq(chatMessagesTable.userId, userId!));

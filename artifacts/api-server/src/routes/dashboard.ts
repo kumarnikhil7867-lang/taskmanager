@@ -1,9 +1,7 @@
 import { Router } from "express";
 import { eq, and, count, desc, gte } from "drizzle-orm";
 import { db, tasksTable, activityLogsTable } from "@workspace/db";
-import { getAuth } from "@clerk/express";
 import { GetActivityTimelineQueryParams } from "@workspace/api-zod";
-import { requireAuth } from "../middlewares/requireAuth";
 
 const router = Router();
 
@@ -27,8 +25,9 @@ function formatTask(task: typeof tasksTable.$inferSelect) {
 }
 
 // GET /api/dashboard/summary
-router.get("/summary", requireAuth, async (req, res) => {
-  const { userId } = getAuth(req);
+router.get("/summary",  async (req, res) => {
+  const userId = "owner";
+  
 
   const tasks = await db
     .select()
@@ -112,8 +111,9 @@ router.get("/summary", requireAuth, async (req, res) => {
 });
 
 // GET /api/dashboard/activity-timeline
-router.get("/activity-timeline", requireAuth, async (req, res) => {
-  const { userId } = getAuth(req);
+router.get("/activity-timeline",  async (req, res) => {
+  const userId = "owner";
+  
   const query = GetActivityTimelineQueryParams.safeParse(req.query);
   if (!query.success) {
     res.status(400).json({ error: "Invalid query params" });
