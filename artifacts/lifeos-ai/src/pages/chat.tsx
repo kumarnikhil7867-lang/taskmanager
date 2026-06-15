@@ -59,7 +59,7 @@ export default function Chat() {
           </div>
         ) : messages && messages.length > 0 ? (
           <div className="space-y-6">
-            {messages.slice().reverse().map((msg, i) => {
+            {messages.map((msg, i) => {
               const isUser = msg.role === 'user';
               return (
                 <div key={msg.id || i} className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'}`}>
