@@ -1,0 +1,14 @@
+{
+  "framework": null,
+  "buildCommand": "pnpm run typecheck:libs && pnpm --filter @workspace/lifeos-ai run build",
+  "outputDirectory": "artifacts/lifeos-ai/dist/public",
+  "installCommand": "pnpm install",
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/index.ts" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ],
+  "env": {
+    "PORT": "3000",
+    "BASE_PATH": "/"
+  }
+}

@@ -1,1 +1,11 @@
-export const OWNER_USER_ID = "owner";
+import { getAuth } from "@clerk/express";
+import type { Request, Response, NextFunction } from "express";
+
+export const requireAuth = (req: Request, res: Response, next: NextFunction): void => {
+  const auth = getAuth(req);
+  if (!auth?.userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  next();
+};
