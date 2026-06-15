@@ -1,6 +1,6 @@
 {
   "framework": null,
-  "buildCommand": "pnpm run typecheck:libs && pnpm --filter @workspace/lifeos-ai run build",
+  "buildCommand": "pnpm run typecheck:libs && pnpm --filter @workspace/api-server run build && pnpm --filter @workspace/lifeos-ai run build",
   "outputDirectory": "artifacts/lifeos-ai/dist/public",
   "installCommand": "pnpm install",
   "rewrites": [
