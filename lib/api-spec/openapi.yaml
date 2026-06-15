@@ -3,13 +3,22 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: LifeOS AI API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: tasks
+    description: Task management
+  - name: activity
+    description: Activity log operations
+  - name: chat
+    description: AI chat interface
+  - name: dashboard
+    description: Dashboard and analytics
+
 paths:
   /healthz:
     get:
@@ -24,6 +33,311 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /tasks:
+    get:
+      operationId: listTasks
+      tags: [tasks]
+      summary: List all tasks for the current user
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [active, completed, paused]
+        - name: due_scope
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [today, this_week, this_month, goal]
+      responses:
+        "200":
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+    post:
+      operationId: createTask
+      tags: [tasks]
+      summary: Create a new task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskInput"
+      responses:
+        "201":
+          description: Created task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /tasks/{id}:
+    get:
+      operationId: getTask
+      tags: [tasks]
+      summary: Get a task by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+    patch:
+      operationId: updateTask
+      tags: [tasks]
+      summary: Update a task
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskUpdate"
+      responses:
+        "200":
+          description: Updated task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+    delete:
+      operationId: deleteTask
+      tags: [tasks]
+      summary: Delete a task
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /tasks/{id}/progress:
+    post:
+      operationId: updateTaskProgress
+      tags: [tasks]
+      summary: Update task progress (add/subtract/set/reset)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProgressUpdate"
+      responses:
+        "200":
+          description: Updated task with new progress
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /tasks/{id}/activity:
+    get:
+      operationId: getTaskActivity
+      tags: [activity]
+      summary: Get activity log for a specific task
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Activity logs for the task
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityLog"
+
+  /activity-logs:
+    get:
+      operationId: listActivityLogs
+      tags: [activity]
+      summary: List activity logs with optional filters
+      parameters:
+        - name: task_id
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: date
+          in: query
+          required: false
+          schema:
+            type: string
+            description: ISO date string (YYYY-MM-DD) to filter by day
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 100
+      responses:
+        "200":
+          description: Activity logs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityLog"
+
+  /chat/message:
+    post:
+      operationId: sendChatMessage
+      tags: [chat]
+      summary: Send a chat message and receive an AI-processed response
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatMessageInput"
+      responses:
+        "200":
+          description: AI response with action result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /chat/history:
+    get:
+      operationId: getChatHistory
+      tags: [chat]
+      summary: Get chat message history
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 50
+      responses:
+        "200":
+          description: Chat history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChatMessage"
+    delete:
+      operationId: clearChatHistory
+      tags: [chat]
+      summary: Clear all chat history for current user
+      responses:
+        "204":
+          description: Cleared
+
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get dashboard summary statistics
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /dashboard/activity-timeline:
+    get:
+      operationId: getActivityTimeline
+      tags: [dashboard]
+      summary: Get recent activity timeline grouped by day
+      parameters:
+        - name: days
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 7
+      responses:
+        "200":
+          description: Activity timeline
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityTimelineDay"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +348,182 @@ components:
       required:
         - status
 
+    ApiError:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    Task:
+      type: object
+      required: [id, title, target_value, completed_value, unit, status, due_scope, created_at, updated_at, remaining]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        target_value:
+          type: number
+        completed_value:
+          type: number
+        remaining:
+          type: number
+          description: "Computed: max(0, target_value - completed_value)"
+        unit:
+          type: string
+        status:
+          type: string
+          enum: [active, completed, paused]
+        due_scope:
+          type: ["string", "null"]
+          enum: [today, this_week, this_month, goal, null]
+        due_date:
+          type: ["string", "null"]
+        created_at:
+          type: string
+        updated_at:
+          type: string
+
+    TaskInput:
+      type: object
+      required: [title, target_value, unit]
+      properties:
+        title:
+          type: string
+          minLength: 1
+        target_value:
+          type: number
+          minimum: 1
+        unit:
+          type: string
+          minLength: 1
+        due_scope:
+          type: string
+          enum: [today, this_week, this_month, goal]
+        due_date:
+          type: string
+
+    TaskUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+        target_value:
+          type: number
+          minimum: 1
+        unit:
+          type: string
+        status:
+          type: string
+          enum: [active, completed, paused]
+        due_scope:
+          type: string
+          enum: [today, this_week, this_month, goal]
+        due_date:
+          type: string
+
+    ProgressUpdate:
+      type: object
+      required: [operation]
+      properties:
+        operation:
+          type: string
+          enum: [add, subtract, set, reset]
+        amount:
+          type: ["number", "null"]
+        user_message:
+          type: ["string", "null"]
+
+    ActivityLog:
+      type: object
+      required: [id, task_id, task_title, operation, created_at]
+      properties:
+        id:
+          type: integer
+        task_id:
+          type: integer
+        task_title:
+          type: string
+        operation:
+          type: string
+          enum: [add, subtract, set, reset, create]
+        amount:
+          type: ["number", "null"]
+        user_message:
+          type: ["string", "null"]
+        created_at:
+          type: string
+
+    ChatMessageInput:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+          minLength: 1
+
+    ChatMessage:
+      type: object
+      required: [id, role, content, created_at]
+      properties:
+        id:
+          type: integer
+        role:
+          type: string
+          enum: [user, assistant]
+        content:
+          type: string
+        action_type:
+          type: ["string", "null"]
+        created_at:
+          type: string
+
+    ChatResponse:
+      type: object
+      required: [message, response_text]
+      properties:
+        message:
+          $ref: "#/components/schemas/ChatMessage"
+        response_text:
+          type: string
+        action_type:
+          type: ["string", "null"]
+        affected_task:
+          $ref: "#/components/schemas/Task"
+          nullable: true
+
+    DashboardSummary:
+      type: object
+      required: [active_task_count, completed_task_count, total_units_completed, total_units_remaining, today_activity_count, week_activity_count]
+      properties:
+        active_task_count:
+          type: integer
+        completed_task_count:
+          type: integer
+        total_units_completed:
+          type: number
+        total_units_remaining:
+          type: number
+        today_activity_count:
+          type: integer
+        week_activity_count:
+          type: integer
+        most_active_task:
+          $ref: "#/components/schemas/Task"
+          nullable: true
+
+    ActivityTimelineDay:
+      type: object
+      required: [date, count, logs]
+      properties:
+        date:
+          type: string
+        count:
+          type: integer
+        logs:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActivityLog"

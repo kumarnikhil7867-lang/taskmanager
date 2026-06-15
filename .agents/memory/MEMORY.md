@@ -1,0 +1,4 @@
+- [Gemini API setup](gemini-setup.md) — Uses GEMINI_API_KEY directly (no proxy); @google/* externalized by esbuild so must be a direct dep of api-server
+- [Clerk Express auth pattern](clerk-express-auth.md) — Use getAuth(req) from @clerk/express, not req.auth directly
+- [Orval codegen TS2308 collision](orval-ts2308.md) — Endpoints with BOTH path params AND query params cause TS collision; remove query params if path params exist
+- [Lazy init for lib modules](lazy-init-libs.md) — Never throw at module import time in shared libs; validate env vars inside functions
