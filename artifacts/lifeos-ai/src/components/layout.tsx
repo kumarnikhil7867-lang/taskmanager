@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, MessageSquare, CheckSquare, Activity as ActivityIcon, Settings, Plus, X } from "lucide-react";
+import { LayoutDashboard, MessageSquare, CheckSquare, Activity as ActivityIcon, Settings, Plus, X, Info } from "lucide-react";
 import { useSendChatMessage, getGetDashboardSummaryQueryKey, getListTasksQueryKey, getGetActivityTimelineQueryKey, getGetChatHistoryQueryKey } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { href: "/chat", icon: MessageSquare, label: "Chat" },
   { href: "/tasks", icon: CheckSquare, label: "Tasks" },
   { href: "/activity", icon: ActivityIcon, label: "Activity" },
+  { href: "/about", icon: Info, label: "About" },
   { href: "/settings", icon: Settings, label: "Settings" },
 ];
 

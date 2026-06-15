@@ -14,6 +14,7 @@ import Chat from "./pages/chat";
 import Tasks from "./pages/tasks";
 import Activity from "./pages/activity";
 import Settings from "./pages/settings";
+import About from "./pages/about";
 
 const queryClient = new QueryClient();
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -210,6 +211,9 @@ function ClerkProviderWithRoutes() {
               </Route>
               <Route path="/settings">
                 <ProtectedPage component={Settings} />
+              </Route>
+              <Route path="/about">
+                <ProtectedPage component={About} />
               </Route>
               <Route>
                 <Redirect to="/" />
