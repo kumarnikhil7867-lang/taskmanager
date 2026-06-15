@@ -1,0 +1,650 @@
+Build a production-ready SaaS web application called "LifeOS AI".
+
+# PRODUCT VISION
+
+LifeOS AI is an AI-powered execution assistant.
+
+This is NOT:
+
+* A traditional todo app
+* A habit tracker
+* A subjective progress tracker
+* A goal progress bar app
+
+The system tracks measurable work units and allows users to update progress naturally through chat.
+
+The AI should only understand language.
+
+The database should always be the source of truth.
+
+All calculations must happen in backend code.
+
+---
+
+# EXAMPLES
+
+User:
+
+"My target is 50 SQL questions today."
+
+Create Task:
+
+Title: SQL Questions
+Target: 50
+Unit: questions
+Completed: 0
+
+User:
+
+"I solved 20 SQL questions."
+
+Update:
+
+Completed = 20
+
+Remaining = 30
+
+User:
+
+"I solved another 5 SQL questions."
+
+Update:
+
+Completed = 25
+
+Remaining = 25
+
+User:
+
+"What work is left today?"
+
+Response:
+
+SQL Questions:
+25/50 completed
+25 remaining
+
+---
+
+# TECH STACK
+
+Frontend:
+
+* Next.js 15
+* React
+* TypeScript
+* Tailwind CSS
+* shadcn/ui
+
+Backend:
+
+* Next.js API Routes
+
+Database:
+
+* Supabase PostgreSQL
+
+Authentication:
+
+* Supabase Auth
+
+AI:
+
+* Gemini 2.5 Flash
+
+Hosting:
+
+* Vercel
+
+Development:
+
+* Replit
+
+---
+
+# MOBILE-FIRST REQUIREMENTS
+
+This application must be designed mobile-first.
+
+Primary use case:
+
+User opens the app multiple times per day from mobile and logs progress.
+
+Requirements:
+
+* Fully responsive
+* Mobile-first design
+* Optimized for iPhone and Android
+* Touch-friendly components
+* ChatGPT-like mobile chat experience
+* Fast loading
+* Bottom navigation
+* Floating quick add button
+* Responsive task cards
+* One-handed usability
+
+---
+
+# PWA REQUIREMENTS
+
+Build as a Progressive Web App.
+
+Requirements:
+
+* Installable on iPhone
+* Installable on Android
+* Add to Home Screen support
+* Web Manifest
+* Service Worker
+* App Icons
+* Offline shell support
+
+The application should behave like a native mobile app.
+
+---
+
+# DATABASE DESIGN
+
+Table: users
+
+* id
+* email
+* created_at
+
+Table: tasks
+
+* id
+* user_id
+* title
+* target_value
+* completed_value
+* unit
+* due_date
+* status
+* created_at
+* updated_at
+
+Table: activity_logs
+
+* id
+* user_id
+* task_id
+* operation
+* amount
+* user_message
+* extracted_json
+* created_at
+
+Activity logs are the source of truth.
+
+Every update must create a new activity log record.
+
+Never silently modify progress.
+
+---
+
+# EVENT SOURCING REQUIREMENT
+
+IMPORTANT:
+
+Do not directly overwrite progress without logging an event.
+
+Every action creates an event.
+
+Examples:
+
+add 20
+add 5
+subtract 2
+set 30
+reset
+
+Example:
+
+Activity Log
+
+add 20
+add 5
+subtract 2
+
+Result:
+
+23 completed
+
+This enables:
+
+* Audit history
+* Undo support
+* Analytics
+* Transparency
+
+---
+
+# CORE FEATURES
+
+1. Authentication
+
+* Sign Up
+* Login
+* Logout
+* Password Reset
+
+---
+
+2. Dashboard
+
+Display:
+
+* Active Tasks
+* Completed Units
+* Remaining Units
+* Due Date
+* Activity Summary
+
+Formula:
+
+remaining = max(0, target_value - completed_value)
+
+No subjective progress bars.
+
+Only measurable values.
+
+---
+
+3. AI Chat Interface
+
+Main interaction method.
+
+Chat should feel similar to ChatGPT.
+
+Examples:
+
+"Create a task to solve 50 SQL questions"
+
+"I solved 20 SQL questions"
+
+"I solved another 5 SQL questions"
+
+"I read 15 pages"
+
+"I applied to 3 companies"
+
+"What work is left today?"
+
+"Show my tasks"
+
+The AI converts messages into structured actions.
+
+---
+
+# AI EXTRACTION ENGINE
+
+IMPORTANT:
+
+The AI NEVER updates the database.
+
+The AI only extracts structured JSON.
+
+Backend validates and performs updates.
+
+Gemini must return JSON only.
+
+---
+
+# SUPPORTED ACTIONS
+
+1. create_task
+
+Input:
+
+"My target is 50 SQL questions today"
+
+Output:
+
+{
+"action": "create_task",
+"title": "SQL Questions",
+"target": 50,
+"unit": "questions",
+"due_scope": "today"
+}
+
+---
+
+2. update_task
+
+Input:
+
+"I solved another 5 SQL questions"
+
+Output:
+
+{
+"action": "update_task",
+"task_name": "SQL Questions",
+"amount": 5,
+"operation": "add"
+}
+
+---
+
+3. subtract_progress
+
+Input:
+
+"I accidentally counted 2 extra SQL questions"
+
+Output:
+
+{
+"action": "update_task",
+"task_name": "SQL Questions",
+"amount": 2,
+"operation": "subtract"
+}
+
+---
+
+4. set_progress
+
+Input:
+
+"I have completed 30 SQL questions in total"
+
+Output:
+
+{
+"action": "update_task",
+"task_name": "SQL Questions",
+"amount": 30,
+"operation": "set"
+}
+
+---
+
+5. reset_progress
+
+Input:
+
+"Reset SQL progress"
+
+Output:
+
+{
+"action": "update_task",
+"task_name": "SQL Questions",
+"operation": "reset"
+}
+
+---
+
+6. show_remaining
+
+Input:
+
+"What work is left today?"
+
+Output:
+
+{
+"action": "show_remaining"
+}
+
+---
+
+7. show_tasks
+
+Input:
+
+"Show my tasks"
+
+Output:
+
+{
+"action": "show_tasks"
+}
+
+---
+
+# QUICK ADD SYSTEM
+
+Provide a fast-entry input.
+
+Examples:
+
++10 SQL
++5 Pages
++2 Applications
++1 Workout
+
+The system should:
+
+* Identify matching task
+* Add progress
+* Create activity log
+* Update dashboard
+
+Available from:
+
+* Mobile home screen
+* Dashboard
+* Chat screen
+
+---
+
+# SMART TASK MATCHING
+
+The AI should map natural language to existing tasks.
+
+Example:
+
+Task:
+
+SQL Questions
+
+User says:
+
+"I finished 10 SQL problems"
+
+Map automatically to:
+
+SQL Questions
+
+Examples:
+
+questions
+problems
+mcqs
+practice sets
+
+Should intelligently match similar phrases.
+
+---
+
+# TASK TYPES
+
+Support measurable units:
+
+* questions
+* pages
+* hours
+* minutes
+* applications
+* calls
+* emails
+* workouts
+* meetings
+* interviews
+* chapters
+* kilometers
+
+Allow custom units.
+
+---
+
+# DAILY, WEEKLY, AND GOAL TARGETS
+
+Support:
+
+Today:
+50 SQL Questions
+
+This Week:
+200 SQL Questions
+
+Goal:
+1000 SQL Questions Before Interview Season
+
+Task Model:
+
+* daily
+* weekly
+* monthly
+* goal-based
+
+User should be able to ask:
+
+"What is left today?"
+
+"What is left this week?"
+
+"How far am I from my SQL goal?"
+
+---
+
+# ACTIVITY HISTORY
+
+Maintain a complete timeline.
+
+Examples:
+
+10:00 AM
+Solved 20 SQL questions
+
+2:00 PM
+Applied to 3 companies
+
+5:00 PM
+Read 15 pages
+
+Features:
+
+* Filter by task
+* Filter by date
+* Weekly summary
+* Monthly summary
+
+---
+
+# ANALYTICS
+
+Dashboard should display:
+
+* Active Tasks
+* Completed Tasks
+* Remaining Work
+* Daily Activity Count
+* Weekly Activity Count
+* Most Active Task
+* Completion Trends
+
+Use actual data only.
+
+Never generate fake progress percentages.
+
+---
+
+# USER INTERFACE
+
+Design Inspiration:
+
+* ChatGPT
+* Notion
+* Linear
+
+Pages:
+
+* Login
+* Signup
+* Dashboard
+* Chat
+* Activity History
+* Settings
+
+Desktop Layout:
+
+Sidebar
+Chat Area
+Task Area
+
+Mobile Layout:
+
+Bottom Navigation
+Chat First Experience
+Floating Quick Add Button
+
+Support:
+
+* Dark Mode
+* Light Mode
+
+Use shadcn/ui components.
+
+---
+
+# SECURITY
+
+* Supabase Row Level Security
+* Protected API Routes
+* Input Validation
+* Rate Limiting
+* User Data Isolation
+
+Users must only access their own tasks and activity logs.
+
+---
+
+# ENVIRONMENT VARIABLES
+
+Create environment configuration for:
+
+* Supabase URL
+* Supabase Anon Key
+* Gemini API Key
+
+Include setup instructions.
+
+---
+
+# DEPLOYMENT
+
+Application must be deployable to Vercel.
+
+Generate:
+
+* Complete Next.js project
+* Database schema
+* SQL migrations
+* API routes
+* Gemini integration
+* Supabase integration
+* PWA setup
+* Responsive UI
+* README
+* Deployment guide
+
+---
+
+# MVP SUCCESS CRITERIA
+
+A user should be able to:
+
+1. Create a quantified task using chat
+2. Update progress using natural language
+3. Use quick add shortcuts
+4. Ask what work remains
+5. View activity history
+6. Install the app on their phone
+7. Use the app daily with minimal friction
+
+Build this as a complete MVP ready for real users and future scaling.
