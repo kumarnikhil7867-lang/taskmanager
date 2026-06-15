@@ -13,6 +13,7 @@ const router = Router();
 type AiAction =
   | { action: "create_task"; title: string; target: number; unit: string; due_scope?: string; response_text: string }
   | { action: "update_task"; task_name: string; amount?: number; operation: "add" | "subtract" | "set" | "reset"; response_text: string }
+  | { action: "delete_task"; task_name: string; response_text: string }
   | { action: "show_remaining"; response_text: string }
   | { action: "show_tasks"; response_text: string }
   | { action: "chat"; response_text: string };
@@ -66,6 +67,11 @@ Return ONLY valid JSON. No markdown. No explanation. Just the JSON object.
 - Use "reset" for: starting over
 - Match task_name to the closest existing task using fuzzy matching (SQL questions ≈ SQL ≈ sql problems ≈ questions)
 - If user says "I solved 20 questions" and there's a SQL questions task, that's an update_task
+
+**delete_task** — User wants to remove/delete a task (e.g., "delete SQL task", "remove this task", "delete these tasks")
+{"action":"delete_task","task_name":"<match to existing task>","response_text":"<confirm deletion>"}
+- Match task_name to the closest existing task using fuzzy matching
+- If user says "delete these tasks" or "delete all tasks", use task_name = "all"
 
 **show_remaining** — User asks what's left (e.g., "what's left?", "how much more?", "remaining work")
 {"action":"show_remaining","response_text":"<list remaining for each active task>"}
@@ -193,7 +199,26 @@ router.post("/message", async (req, res) => {
 
   let affectedTask: ReturnType<typeof formatTask> | null = null;
 
-  if (aiAction.action === "create_task") {
+  if (aiAction.action === "delete_task") {
+    if (aiAction.task_name === "all") {
+      await db.delete(tasksTable).where(eq(tasksTable.userId, userId));
+    } else {
+      const matchedTask =
+        tasks.find(
+          (t) =>
+            t.title.toLowerCase().includes(aiAction.task_name.toLowerCase()) ||
+            aiAction.task_name.toLowerCase().includes(t.title.toLowerCase()),
+        ) ??
+        tasks.find((t) => {
+          const words = aiAction.task_name.toLowerCase().split(/\s+/);
+          return words.some((w) => w.length > 2 && t.title.toLowerCase().includes(w));
+        });
+
+      if (matchedTask) {
+        await db.delete(tasksTable).where(and(eq(tasksTable.id, matchedTask.id), eq(tasksTable.userId, userId)));
+      }
+    }
+  } else if (aiAction.action === "create_task") {
     const [newTask] = await db
       .insert(tasksTable)
       .values({
